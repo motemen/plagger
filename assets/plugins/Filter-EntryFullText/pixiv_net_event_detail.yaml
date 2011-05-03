@@ -1,0 +1,14 @@
+author: motemen
+handle: http://www\.pixiv\.net/event_detail\.php\?event_id=\d+
+custom_feed_handle: http://www\.pixiv\.net/event\.php(\?a=.+)?
+custom_feed_follow_link: event_detail.php\?event_id=\d+
+extract_xpath:
+  title: //p[@class="event-DetailTitle"]/span/text()
+  date: //p[@class="event-DetailDate"]/span/text()
+  location: //p[@class="event-DetailAddress"]/span
+extract_after_hook: |
+  $data->{date} =~ /(\d+)年(\d+)月(\d+)日\D+(\d+):(\d+)～(\d+):(\d+)/;
+  $data->{date} = "$1-$2-$3 $4:$5";
+  $args->{entry}->{ical_dtend} = "$1-$2-$3 $6:$7";
+  $args->{entry}->{location} = $data->{location};
+  $args->{entry}->{location} =~ s/<.*?>//g;
