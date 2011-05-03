@@ -27,6 +27,20 @@ sub plugin_init {
     }
 }
 
+sub _dt_to_ical {
+    my ($dt) = @_;
+
+    my $p = [ $dt->format('ICal'), {} ];
+    $p->[0] =~ s/^TZID=(.*?)://
+        and $p->[1]->{TZID} = $1;
+
+    if ($dt->hms eq '00:00:00') {
+        $p->[1]->{VALUE} = 'DATE';
+    }
+
+    return $p;
+}
+
 sub publish_feed {
     my($self, $context, $args) = @_;
 
@@ -37,25 +51,21 @@ sub publish_feed {
     );
 
     for my $entry ($feed->entries) {
-        my $date  = $entry->date;
         my $event = Data::ICal::Entry::Event->new;
 
-        my $tz = $date->time_zone;
-
-        my $dt = [ $date->format('ICal'), {} ];
-        $dt->[0] =~ s/^TZID=(.*?)://
-            and $dt->[1]->{TZID} = $1;
-
-        if ($date->hms eq '00:00:00') {
-            $dt->[1]->{VALUE} = 'DATE';
-        }
-
+        my $dtstart = _dt_to_ical($entry->date);
+        my $dtend =
+            ref $entry->{ical_dtend} ? _dt_to_ical($entry->{ical_dtend})
+            : $entry->{ical_dtend}   ? _dt_to_ical(Plagger::Date->parse_dwim($entry->{ical_dtend}))
+            : $dtstart;
         $event->add_properties(
             summary     => $entry->title,
             description => $entry->summary ? $entry->summary->plaintext : '',
-            dtstart     => $dt,
-            dtend       => $dt,
+            dtstart     => $dtstart,
+            dtend       => $dtend,
+            url         => $entry->link,
         );
+        $event->add_properties(location => $entry->location) if $entry->location;
         $ical->add_entry($event);
     }
 
