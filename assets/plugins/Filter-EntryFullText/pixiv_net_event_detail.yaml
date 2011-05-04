@@ -6,6 +6,7 @@ extract_xpath:
   title: //p[@class="event-DetailTitle"]/span/text()
   date: //p[@class="event-DetailDate"]/span/text()
   location: //p[@class="event-DetailAddress"]/span
+  summary: //div[@class="event-cont event-length"]/p
 extract_after_hook: |
   $data->{date} =~ /(\d+)年(\d+)月(\d+)日\D+(\d+):(\d+)～(\d+):(\d+)/;
   $data->{date} = "$1-$2-$3 $4:$5";
