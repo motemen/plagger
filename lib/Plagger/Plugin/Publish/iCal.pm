@@ -49,6 +49,9 @@ sub publish_feed {
     $ical->add_properties(
         'X-WR-CALNAME'  => $feed->title,
     );
+    if (my $tz = $self->conf->{timezone} || $context->conf->{timezone}) {
+        $ical->add_properties('X-WR-TIMEZONE' => $tz);
+    }
 
     for my $entry ($feed->entries) {
         my $event = Data::ICal::Entry::Event->new;
