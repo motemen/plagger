@@ -56,11 +56,16 @@ sub publish_feed {
     for my $entry ($feed->entries) {
         my $event = Data::ICal::Entry::Event->new;
 
+        my $end_dt =
+            ref $entry->{ical_dtend} ? $entry->{ical_dtend}
+            : $entry->{ical_dtend} ? Plagger::Date->parse_dwim($entry->{ical_dtend})
+            : undef;
+        if ($end_dt && $end_dt->time_zone->is_floating) {
+            $end_dt->set_time_zone($entry->date->time_zone);
+        }
+
         my $dtstart = _dt_to_ical($entry->date);
-        my $dtend =
-            ref $entry->{ical_dtend} ? _dt_to_ical($entry->{ical_dtend})
-            : $entry->{ical_dtend}   ? _dt_to_ical(Plagger::Date->parse_dwim($entry->{ical_dtend}))
-            : $dtstart;
+        my $dtend = $end_dt ? _dt_to_ical($end_dt) : $dtstart;
         $event->add_properties(
             summary     => $entry->title,
             description => $entry->summary ? $entry->summary->plaintext : '',
